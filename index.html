@@ -28,7 +28,7 @@
         <input type="password" placeholder="Enter Password" name="psw" required>
 
         <label for="max_duration">Set Maximum Duration in Minutes</label>
-        <input type="text" placeholder="5" name="max_duration" required>
+        <input type="text" placeholder="1" name="max_duration" required>
         
     </div>
 
@@ -70,6 +70,7 @@
               ++totalSeconds;
               secondsLabel.innerHTML = pad(totalSeconds % 60);
               minutesLabel.innerHTML = pad(parseInt(totalSeconds / 60));
+                 psw.innerHTML = max_duration
                  if (pad(parseInt(totalSeconds / 60)) == max_duration) {close();}
             }
             
