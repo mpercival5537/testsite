@@ -1,0 +1,338 @@
+<body> 
+    <style>
+    body {border: 10px solid yellow;
+          margin:0;
+          padding:0;}
+    table, th, td {
+          border:1px solid black;}
+    canvas {
+        background: black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 5px solid white;
+    }
+    </style>
+
+    <div>
+        <h2>Secret Server Recording Test</h2>
+    </div>
+
+    <div class="container">
+        <H3>Login Auto Fill Test</H3>
+
+        <label for="uname">Username</label>
+        <input type="text" placeholder="Enter Username" name="uname" required>
+
+        <label for="psw">Password</label>
+        <input type="password" placeholder="Enter Password" name="psw" required>
+
+    </div>
+
+    <div>
+        <h3>Continuity Test</h3>
+        <table style="width:70%">
+            <tr>
+                <td>The current time is    : </td>
+                <td> <label id="currentTime"></label></td>
+            </tr>
+            <tr>
+                <td>This webpage loaded at :</td>
+                <td><label id="startTime"></label></td>
+            </tr>
+            <tr>
+                <td>Time since webpage loaded: :</td>
+                <td><label id="minutes">00</label>:<label id="seconds">00</label></td>
+            </tr>
+            <tr>
+                <td>This webpage closed at    : </td>
+                <td><label id="endTime"></label></td>
+            </tr>
+        </table>
+
+        <script type="text/javascript">
+            var minutesLabel = document.getElementById("minutes");
+            var secondsLabel = document.getElementById("seconds");
+            var totalSeconds = 0;
+            setInterval(setTime, 1000);
+            setInterval(refreshCurrentTime, 1000);
+            
+            window.onbeforeunload = function(){
+                const endTimeDisplay = document.getElementById("endTime");
+                endTimeDisplay.innerHTML = datetime;
+                onBlur();
+            }
+
+            function setTime() {
+              ++totalSeconds;
+              secondsLabel.innerHTML = pad(totalSeconds % 60);
+              minutesLabel.innerHTML = pad(parseInt(totalSeconds / 60));
+            }
+            
+            function pad(val) {
+              var valString = val + "";
+              if (valString.length < 2) {
+                return "0" + valString;
+              } else {
+                return valString;
+              }
+            }
+
+            function refreshCurrentTime() {
+                const timeDisplay = document.getElementById("currentTime");
+                const dateString = new Date().toLocaleString();
+                const formattedString = dateString.replace(", ", " - ");
+                timeDisplay.textContent = formattedString;
+            }
+
+           
+            const dateString = new Date().toLocaleString();
+            const formattedString = dateString.replace(", ", " - ");
+            document.getElementById("startTime").textContent = formattedString
+
+            </script>
+    </div>
+
+    <div>
+        <h3>Artefact Test</h3>
+        <div id="game_box">
+            <canvas width="800" height="100" id="game"></canvas>
+        </div>
+        <script>
+            var canvas = document.getElementById('game');
+            var context = canvas.getContext('2d');
+            
+            var grid = 10;
+            var count = 0;
+              
+            var snake = {
+              x: 160,
+              y: 160,
+              
+              // snake velocity. moves one grid length every frame in either the x or y direction
+              dx: grid,
+              dy: 0,
+              
+              // keep track of all grids the snake body occupies
+              cells: [],
+              
+              // length of the snake. grows when eating an apple
+              maxCells: 4
+            };
+            var apple = {
+              x: 0,
+              y: 0
+            };
+            
+            // get random whole numbers in a specific range
+            // @see https://stackoverflow.com/a/1527820/2124254
+            function getRandomInt(min, max) {
+              return Math.floor(Math.random() * (max - min)) + min;
+            }
+            
+            // game loop
+            function loop() {
+              requestAnimationFrame(loop);
+            
+              // slow game loop to 15 fps instead of 60 (60/15 = 4)
+              if (++count < 4) {
+                return;
+              }
+            
+              count = 0;
+              context.clearRect(0,0,canvas.width,canvas.height);
+            
+              // move snake by it's velocity
+              snake.x += snake.dx;
+              snake.y += snake.dy;
+            
+              // wrap snake position horizontally on edge of screen
+              if (snake.x < 0) {
+                snake.x = canvas.width - grid;
+              }
+              else if (snake.x >= canvas.width) {
+                snake.x = 0;
+              }
+              
+              // wrap snake position vertically on edge of screen
+              if (snake.y < 0) {
+                snake.y = canvas.height - grid;
+              }
+              else if (snake.y >= canvas.height) {
+                snake.y = 0;
+              }
+            
+              // keep track of where snake has been. front of the array is always the head
+              snake.cells.unshift({x: snake.x, y: snake.y});
+            
+              // remove cells as we move away from them
+              if (snake.cells.length > snake.maxCells) {
+                snake.cells.pop();
+              }
+            
+              // draw apple
+              context.fillStyle = 'red';
+              context.fillRect(apple.x, apple.y, grid-1, grid-1);
+            
+              // draw snake one cell at a time
+              context.fillStyle = 'green';
+              snake.cells.forEach(function(cell, index) {
+                
+                // drawing 1 px smaller than the grid creates a grid effect in the snake body so you can see how long it is
+                context.fillRect(cell.x, cell.y, grid-1, grid-1);  
+            
+                // snake ate apple
+                if (cell.x === apple.x && cell.y === apple.y) {
+                  snake.maxCells++;
+            
+                  // canvas is 400x400 which is 25x25 grids 
+                  apple.x = getRandomInt(0, 50) * grid;
+                  apple.y = getRandomInt(0, 6) * grid;
+                }
+            
+                // check collision with all cells after this one (modified bubble sort)
+                for (var i = index + 1; i < snake.cells.length; i++) {
+                  
+                  // snake occupies same space as a body part. reset game
+                  if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                    snake.x = 160;
+                    snake.y = 160;
+                    snake.cells = [];
+                    snake.maxCells = 4;
+                    snake.dx = grid;
+                    snake.dy = 0;
+            
+                    apple.x = getRandomInt(0, 50) * grid;
+                    apple.y = getRandomInt(0, 6) * grid;
+                  }
+                }
+              });
+            }
+            
+            // listen to keyboard events to move the snake
+            document.addEventListener('keydown', function(e) {
+              // prevent snake from backtracking on itself by checking that it's 
+              // not already moving on the same axis (pressing left while moving
+              // left won't do anything, and pressing right while moving left
+              // shouldn't let you collide with your own body)
+              
+              // left arrow key
+              if (e.which === 37 && snake.dx === 0) {
+                snake.dx = -grid;
+                snake.dy = 0;
+              }
+              // up arrow key
+              else if (e.which === 38 && snake.dy === 0) {
+                snake.dy = -grid;
+                snake.dx = 0;
+              }
+              // right arrow key
+              else if (e.which === 39 && snake.dx === 0) {
+                snake.dx = grid;
+                snake.dy = 0;
+              }
+              // down arrow key
+              else if (e.which === 40 && snake.dy === 0) {
+                snake.dy = grid;
+                snake.dx = 0;
+              }
+            });
+            
+            // start the game
+            requestAnimationFrame(loop);
+            </script>
+
+
+    </div>
+
+    <div id="Activity_Test">
+        <h3>Activity Test</h3>
+        <table style="width:70%">
+            <tr>
+                <td>This page is currently    : </td>
+                <td> <label id="active">In Focus</label></td>
+            </tr>
+            <tr>
+                <td>Total In Focus Duration:</td>
+                <td><label id="totalinfocusminutes">00</label>:<label id="totalinfocusseconds">00</label></td>
+            </tr>
+        </table>
+
+        <table id="Activity_Log" style="width:70%">
+            <tr>
+                <th>Entered In Focus (Current Time)</th>
+                <th>Entered In Focus (Since Page Load)</th>
+                <th>Left Focus (Current Time)</th>
+                <th>Left Focus (Since Page Load)</th>
+                <th>Duration (Sec)</th>
+            </tr>
+        </table>
+
+        <script type="text/javascript">
+            var activelabel = document.getElementById("active");
+            var totalinfocusminutes = document.getElementById("totalinfocusminutes");
+            var totalinfocusseconds = document.getElementById("totalinfocusseconds");
+            var onFocusStartTime = totalSeconds;
+            var totalActiveTime = 0
+            var table = document.getElementById("Activity_Log");
+
+            function onBlur() {
+                activelabel.innerHTML = "In Background";
+                const paraback = document.createElement("inbackground");
+
+                var row = table.insertRow(1);
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);    
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);    
+                var cell5 = row.insertCell(4);    
+
+                const dateString = new Date().toLocaleString();
+                const formattedString = dateString.replace(", ", " - ");
+                onFocusEndTimeActual = formattedString
+
+                cell1.innerHTML = onFocusStartTimeActual
+                cell2.innerHTML = (pad(parseInt(onFocusStartTime / 60))+":"+pad(onFocusStartTime % 60));
+                cell3.innerHTML = onFocusEndTimeActual
+                cell4.innerHTML = (pad(parseInt(totalSeconds / 60))+":"+pad(totalSeconds % 60));
+                cell5.innerHTML = (totalSeconds - onFocusStartTime)
+
+                totalActiveTime = totalActiveTime + (totalSeconds - onFocusStartTime)
+                
+                totalinfocusseconds.innerHTML = pad(totalActiveTime % 60);
+                totalinfocusminutes.innerHTML = pad(parseInt(totalActiveTime / 60));
+
+                document.body.appendChild(paraback);
+            };
+            function onFocus(){
+                activelabel.innerHTML = "In Focus";
+                onFocusStartTime = totalSeconds
+
+                const dateString = new Date().toLocaleString();
+                const formattedString = dateString.replace(", ", " - ");
+                onFocusStartTimeActual = formattedString
+
+            };
+            onFocus();
+            if (/*@cc_on!@*/false) { 
+                document.onfocusin = onFocus;
+                document.onfocusout = onBlur;
+            } else {
+                window.onfocus = onFocus;
+                window.onblur = onBlur;
+            }
+
+            function pad(val) {
+              var valString = val + "";
+              if (valString.length < 2) {
+                return "0" + valString;
+              } else {
+                return valString;
+              }
+            }
+        </script>
+
+    </div>
+
+</form>
+<script defer data-domain="sstest.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script></body>
